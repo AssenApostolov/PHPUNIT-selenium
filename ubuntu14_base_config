@@ -1,0 +1,97 @@
+//TODO Specify base machine (ubuntu 14 + apache2 mostly)
+//TODO Setup as docker file or nice shell script
+
+Ubuntu 14.04
+install apache https://www.digitalocean.com/community/tutorials/how-to-install-linux-apache-mysql-php-lamp-stack-on-ubuntu-14-04
+(Why?) Switch order of index priority in conf file: sudo nano /etc/apache2/mods-enabled/dir.conf -> index.php highest priority
+
+
+#get php 5.6 (see ref for context: https://www.digitalocean.com/community/questions/how-to-upgrade-from-php-v-5-5-9-to-v-5-6 )
+sudo apt-get install software-properties-common
+sudo add-apt-repository ppa:ondrej/php
+sudo apt-get update
+sudo apt-get upgrade
+sudo apt-get install php5.6
+sudo apt-get install php5.6-simplexml
+sudo apt-get install php5.6-curl
+sudo apt-get install zip unzip
+sudo apt-get install git
+
+#get browsers
+sudo apt-get install firefox
+
+#get java 8 (minimum required)
+sudo add-apt-repository ppa:webupd8team/java
+sudo apt-get update
+sudo apt-get install oracle-java8-installer
+
+#get Selenium server - ftp'd into folder
+#Download selenium server http://docs.seleniumhq.org/download/ 3.0.0-beta2
+#-> into folder vagrant/main/selenium_server/
+
+
+
+#run selenium server
+java -jar selenium-server-standalone-3.0.0-beta2.jar &
+
+#terminate server #TODO, be less brutal? Also terminate specific selenium server in case of hubs
+pidof java
+kill -9 #pid
+
+#Get PHPUNIT
+# Ref: https://phpunit.de/manual/current/en/installation.html
+#Ignored xdebug http://xdebug.org/ (code coverage,not integral to integration tests)
+
+#Or get codeception globally
+sudo curl -LsS http://codeception.com/codecept.phar -o /usr/local/bin/codecept
+sudo chmod a+x /usr/local/bin/codecept
+
+#setup codecept
+codecept bootstrap
+codecept generate:cept acceptance Welcome
+
+#setup tests/acceptance.suite.yml for acceptance tests. Redirect to proper url
+# class_name: AcceptanceTester
+# modules:
+#     enabled:
+#         - PhpBrowser:
+#             url: {YOUR APP'S URL}
+#         - \Helper\Acceptance
+
+#test run
+codecept run
+
+#selenium yml
+# class_name: AcceptanceTester
+# modules:
+#     enabled:
+#         - WebDriver:
+#             url: 
+#             browser: firefox            
+#         - \Helper\Acceptance
+
+
+
+#LEGACY - PHPUNIT only route
+# - install composer: 
+# php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+# php -r "if (hash_file('SHA384', 'composer-setup.php') === 'e115a8dc7871f15d853148a7fbac7da27d6c0030b848d9b3dc09e2a0388afed865e6a3d6b3c0fad45c48e2b5fc1196ae') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
+# php composer-setup.php
+# php -r "unlink('composer-setup.php');"
+# make composer.json file //TODO add final file
+
+
+
+# composer.json  
+# {
+#     "require": {
+#         "phpunit/php-invoker": "*",
+#         "phpunit/dbunit": ">=1.2",
+#         "phpunit/phpunit-selenium": ">=1.2"
+#     },
+#     "require-dev": {
+#         "phpunit/php-invoker": "*",
+#         "phpunit/dbunit": ">=1.2",
+#         "phpunit/phpunit-selenium": ">=1.2"
+#     }
+# }
