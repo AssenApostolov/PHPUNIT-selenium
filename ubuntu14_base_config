@@ -1,6 +1,3 @@
-//TODO Specify base machine (ubuntu 14 + apache2 mostly)
-//TODO Setup as docker file or nice shell script
-
 Ubuntu 14.04
 install apache https://www.digitalocean.com/community/tutorials/how-to-install-linux-apache-mysql-php-lamp-stack-on-ubuntu-14-04
 (Why?) Switch order of index priority in conf file: sudo nano /etc/apache2/mods-enabled/dir.conf -> index.php highest priority
@@ -31,7 +28,7 @@ sudo apt-get install oracle-java8-installer
 
 
 
-#run selenium server
+#run selenium server #TODO rename file to selenium-server-standalone.jar ? easier to reuse everywhere.
 java -jar selenium-server-standalone-3.0.0-beta2.jar &
 
 #terminate server #TODO, be less brutal? Also terminate specific selenium server in case of hubs
@@ -60,6 +57,15 @@ codecept generate:cept acceptance Welcome
 
 #test run
 codecept run
+
+
+#Selenium configs
+
+#hub
+set with: java -jar selenium-server-standalone.jar -role hub -hubConfig config_file.json -debug
+
+#node
+set with: java -jar selenium-server-standalone.jar -role node -nodeConfig config_file.json -Dwebdriver.chrome.driver=chromedriver.exe
 
 #selenium yml
 # class_name: AcceptanceTester
@@ -95,3 +101,4 @@ codecept run
 #         "phpunit/phpunit-selenium": ">=1.2"
 #     }
 # }
+
