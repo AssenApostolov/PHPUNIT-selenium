@@ -2,6 +2,8 @@ Ubuntu 14.04
 install apache https://www.digitalocean.com/community/tutorials/how-to-install-linux-apache-mysql-php-lamp-stack-on-ubuntu-14-04
 (Why?) Switch order of index priority in conf file: sudo nano /etc/apache2/mods-enabled/dir.conf -> index.php highest priority
 
+#TODO list opf dependancies
+# PHP 5.6 - getting from external non official repo. Might be problematic down the line?
 
 #get php 5.6 (see ref for context: https://www.digitalocean.com/community/questions/how-to-upgrade-from-php-v-5-5-9-to-v-5-6 )
 sudo apt-get install software-properties-common
@@ -11,29 +13,44 @@ sudo apt-get upgrade
 sudo apt-get install php5.6
 sudo apt-get install php5.6-simplexml
 sudo apt-get install php5.6-curl
+sudo apt-get install php5.6-mbstring
 sudo apt-get install zip unzip
 sudo apt-get install git
 
 #get browsers
-sudo apt-get install firefox
+#firefox
+#http://ftp.mozilla.org/pub/firefox/releases/ for all versions, go for 47.0.1
+#make sure selenium pulls the right firefox... need to symlink the bin
+sudo ln -s /full/path/to/binary /usr/bin/firefox
+#if there is already a symlink, you need to remove it first
+sudo unlink /usr/bin/firefox
+sudo apt-get install firefox #firefox is not playing nice -_- -> STILL need it or else get some library support error. http://el.web.id/how-to-solve-xpcomglueload-error-couldnt-load-xpcom-mozilla-firefox-debian-149
+# ... some error on server... http://el.web.id/how-to-solve-xpcomglueload-error-couldnt-load-xpcom-mozilla-firefox-debian-149
+
+#chrome TODO
+wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+sudo dpkg -i google-chrome-stable_current_amd64.deb
+sudo apt-get -f install
+sudo apt-get install xvfb #display for browsers
 
 #get java 8 (minimum required)
 sudo add-apt-repository ppa:webupd8team/java
 sudo apt-get update
-sudo apt-get install oracle-java8-installer
+sudo apt-get install oracle-java8-installer #how to skip user agreement automatically?
 
-#get Selenium server - ftp'd into folder
-#Download selenium server http://docs.seleniumhq.org/download/ 3.0.0-beta2
+#get Selenium server - ftp'd into folder TODO as proper commands
+#Download selenium server http://selenium-release.storage.googleapis.com/index.html
 #-> into folder vagrant/main/selenium_server/
-
+#-> extract, rename jar file and dump into selenium server
 
 
 #run selenium server #TODO rename file to selenium-server-standalone.jar ? easier to reuse everywhere.
-java -jar selenium-server-standalone-3.0.0-beta2.jar &
+# SEE below for hub and node 
 
 #terminate server #TODO, be less brutal? Also terminate specific selenium server in case of hubs
 pidof java
 kill -9 #pid
+#alternatively, kill selectively a node or hub with htop
 
 #Get PHPUNIT
 # Ref: https://phpunit.de/manual/current/en/installation.html
@@ -59,13 +76,34 @@ codecept generate:cept acceptance Welcome
 codecept run
 
 
-#Selenium configs
+#Configs and servers - Selenium + xvfb
 
-#hub
-set with: java -jar selenium-server-standalone.jar -role hub -hubConfig config_file.json -debug
+#fake display
+sudo Xvfb :10 -ac &
+#maybe this instead?
+sudo xvfb-run --auto-servernum phpunit test.php >> testlog.txt
+sudo xvfb-run --auto-servernum codecept run
 
-#node
-set with: java -jar selenium-server-standalone.jar -role node -nodeConfig config_file.json -Dwebdriver.chrome.driver=chromedriver.exe
+#Selenium hub RUN WITH XVFB
+set with: java -jar selenium-server-standalone.jar -role hub -hubConfig default_hub.json -debug &
+
+#Selenium node RUN WITH XVFB
+set with: java -jar selenium-server-standalone.jar -role node -nodeConfig default_node.json &
+
+-Dwebdriver.chrome.driver=/vagrant/main/selenium_server/web_driver/chromedriver_linux64/chromedriver
+
+java -jar selenium-server-standalone.jar -role node -nodeConfig default_node.json -Dwebdriver.chrome.driver=/vagrant/main/selenium_server/web_driver/chromedriver_linux64/chromedriver &
+-> cannot create .pki/ blah blah -> mv .pki/ or delete it
+
+# Good one:
+sudo xvfb-run --auto-servernum java -jar selenium-server-standalone.jar -role hub &
+sudo xvfb-run --auto-servernum java -jar selenium-server-standalone.jar -role node -nodeConfig default_node.json -Dwebdriver.chrome.driver=/vagrant/main/selenium_server/web_driver/chromedriver_linux64/chromedriver &
+
+
+# Get chromeDriver 
+#download http://chromedriver.storage.googleapis.com/index.html 2.23 - compatible with chrome 51-53
+PATH=/vagrant/main/selenium_server/web_driver/chromedriver_linux64/chromedriver:$PATH
+
 
 #selenium yml
 # class_name: AcceptanceTester
@@ -102,3 +140,10 @@ set with: java -jar selenium-server-standalone.jar -role node -nodeConfig config
 #     }
 # }
 
+sudo xvfb-run --auto-servernum codecept run
+
+#Shell:
+
+#Go to root directory /
+mkdir selenium_server
+cd selenium_server
